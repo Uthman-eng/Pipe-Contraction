@@ -6,6 +6,3 @@ Numerically back calculate the loss coefficient $K$ from the simulated pressure 
 
 $$K = \frac{\Delta p / \rho g}{v^2 / 2g}$$
 
-## References
-
-Dokken, J.S. (2023). FEniCSx Tutorial. https://jsdokken.com/dolfinx-tutorial
