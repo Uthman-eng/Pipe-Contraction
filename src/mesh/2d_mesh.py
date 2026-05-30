@@ -51,6 +51,7 @@ x , y = coords[:,0], coords[:, 1]
 _, _, elem_node_tags = gmsh.model.mesh.getElements(dim=1)
 lines = elem_node_tags[0].reshape(-1, 2) - 1
 
+# gmsh.write("pipe_contraction.msh")
 gmsh.finalize()
 
 
@@ -61,5 +62,5 @@ for line in lines:
 ax.scatter(x, y, s=10, color="tomato", zorder=3)
 ax.set_aspect("equal")
 ax.set_xlabel('pipe length (mm)')
-ax.set_ylabel('diameter')
+ax.set_ylabel('diameter (mm)')
 plt.savefig("plotting/2d_mesh")
