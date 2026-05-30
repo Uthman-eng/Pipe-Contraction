@@ -4,10 +4,6 @@
 
 Solving incompressible Navier-Stokes through an expansion pipe from $d_1 = 7.2\,\text{mm}$ to $d_2 = 17.2\,\text{mm}$. Goal: back-calculate the loss coefficient $K$ and compare to experiment data.
 
-
-![Fluid through pipe](/assets/pipe_flow.png)
-
-
 ## 2. Governing Equations
 
 **1. Navier-Stokes (Momentum Equation):**
@@ -36,17 +32,17 @@ $$\nabla \cdot u = 0\tag2$$
 
 ## 3. Weak Formulation
 
-Inner product notation $\text{(Lebesgue square-integrable)}$ over the domain $\Omega$ and its boundary $\partial\Omega$:
+Inner product notation over the domain $\Omega$ and its boundary $\partial\Omega$ are defines as:
 
-$$\langle v,\, w \rangle = \int_\Omega v \cdot w\ \mathrm{d}x,
+$$\langle v,\, w \rangle := \int_\Omega v \cdot w\ \mathrm{d}x,
 \qquad 
-\langle v,\, w \rangle_{\partial\Omega} = \int_{\partial\Omega} v \cdot w\, \mathrm{d}s$$
+\langle v,\, w \rangle_{\partial\Omega} := \int_{\partial\Omega} v \cdot w\, \mathrm{d}s$$
 
 
 
 Integrating the stress divergence term by parts gives the boundary term:
 
-$$\langle -\nabla \cdot \sigma,\, v \rangle = \langle \sigma,\, \varepsilon(v) \rangle - \langle T,\, v \rangle_{\partial\Omega}$$
+$$\langle -\nabla \cdot \sigma,\, v \rangle = \langle \sigma,\, \varepsilon(v) \rangle - \langle T,\, v \rangle_{\partial\Omega} \tag3$$
 
 The boundary term $\langle T,\, v \rangle_{\partial\Omega}$ vanishes at inlet and walls; at the outlet it gives the do-nothing (natural outflow) condition.
 
@@ -54,37 +50,35 @@ The boundary term $\langle T,\, v \rangle_{\partial\Omega}$ vanishes at inlet an
 
 ## 4. IPCS Scheme
 
-Monolithic is expensive — splitting reduces to three cheaper sub-problems. Deeper understanding of IPCS schemes vs. monolithic isn't too well-known right now.
+Monolithic is expensive and instead splitting methods are used instead, reducing the problem into three cheaper sub-problems. Deeper understanding of IPCS schemes vs. monolithic isn't too well-known right now.
 
 **Step 1 — Tentative velocity** (weak momentum, stress term integrated by parts):
 
-$$\langle -\nabla \cdot \sigma,\, v \rangle = \langle \sigma,\, \varepsilon(v) \rangle - \langle T,\, v \rangle_{\partial\Omega}$$
+$$\langle -\nabla \cdot \sigma,\, v \rangle = \langle \sigma,\, \varepsilon(v) \rangle - \langle T,\, v \rangle_{\partial\Omega} \tag3$$
 
 **Step 2 — Pressure correction** (Poisson equation):
 
-$$-\frac{\rho\,\nabla \cdot u^*}{\Delta t} + \nabla^2 p^{n+1} - \nabla^2 p^{n} = 0$$
+$$-\frac{\rho\,\nabla \cdot u^*}{\Delta t} + \nabla^2 p^{n+1} - \nabla^2 p^{n} = 0\tag4$$
 
 **Step 3 — Velocity correction**:
 
-$$\rho\,\langle u^{n+1} - u^*,\, v \rangle = -\Delta t\,\langle \nabla(p^{n+1} - p^{n}),\, v \rangle$$
+$$\rho\,\langle u^{n+1} - u^*,\, v \rangle = -\Delta t\,\langle \nabla(p^{n+1} - p^{n}),\, v \rangle \tag5$$
 
-**Crank-Nicolson / Adams-Bashforth time discretisation**
+**Crank-Nicolson time discretisation / Adams-Bashforth Approximation**
 
 $$u^{n+\frac{1}{2}} \approx \frac{u^{n+1} + u^n}{2}$$
 
-Crank-Nicolson for the time-dependent term — this converges better than implicit Euler for the given mesh and is less stable, so we know where an error may actually come from. Adams-Bashforth approximation for the nonlinear term.
+Crank-Nicolson for the time-dependent term.  Converges better than implicit Euler for the given mesh and is less stable, so we know where an error may actually come from. Adams-Bashforth approximation for the nonlinear term. Zero idea about deeper stuff with Adams-Bashforth Approximation method.
 
 **Taylor-Hood elements P2/P1**
 
 Zero idea about Taylor-Hood elements right now, reading through this.
 
----
-
 ## 5. Implementation
 
-Defined the mesh (2D) in Gmsh following through examples and tagged wall, inlet, outlet physical groups. Kept everything else the same and followed on exactly from FEniCSx tutorials [1, 2].
+Defined the mesh (2D) in Gmsh (Ref $4$) following through examples and tagged wall, inlet, outlet physical groups. Kept everything else the same and followed on exactly from FEniCSx tutorials [1, 2].
 
-1. Set up Gmsh and correctly set boundary tags — walls, inlet, outlet. The mesh was made to take input and output parameters so I can easily change the diameters, spacing, and length of the pipe.
+1. Set up Gmsh and correctly set boundary tags; walls, inlet, outlet. The mesh was made to take input and output parameters so I can easily change the diameters, spacing, and length of the pipe.
 2. Set up parameters and function spaces and input variational form.
 3. Set up variational UFL forms and PETSc solvers for each of the three IPCS steps — mostly copied from examples.
 4. Time loop: stepped through time to get pressure and velocity fields.
@@ -94,24 +88,19 @@ Inlet uses a parabolic (Poiseuille) profile matching zero at the walls and maxim
 
 $$u(y) = \frac{4\,U_{\max}(y - y_{\mathrm{bot}})(y_{\mathrm{top}} - y)}{d_1^2}$$
 
-```python
-def inlet_velocity(x):
-    values = np.zeros((2, x.shape[1]))
-    values[0] = (4 * U_max * (x[1] - yinlet_bot) * ((yinlet_bot + d2) - x[1])) / d1**2
-    return values
-```
 
-Physical parameters set to water; Reynolds number kept low to prevent turbulence — otherwise the model just becomes wrong. I haven't done this yet but I need to — maybe add onto Streamlit, or at the very least make a dashboard that shows me max $u$ and average inlet $\bar{U}$, etc. My experiment data uses average $u$, so I can then modify my $u$ to get the average $u$ matching that of the experiment, and then the back-calculation will be easier. At minimum the dashboard should give me average velocity at inlet and outlet, and the Reynolds number.
+Physical parameters set to water, Reynolds number kept low to prevent turbulence. I haven't done this yet but I need to, maybe add onto Streamlit, or at the very least make a dashboard that shows me max $u$ and average inlet $\bar{U}$, etc. My experiment data uses average $u$, so I can then modify my $u$ to get the average $u$ matching that of the experiment, and then the back-calculation will be easier. At minimum the dashboard should give me average velocity at inlet and outlet, and the Reynolds number.
 
 ---
 
 ## 6. Results
+Quick Pyvista output of what i have currently produced.
 
-*[Placeholder: results once runs are complete]*
+![Fluid through pipe](/assets/pipe_flow.png)
 
 ---
 
-## 7. What I Still Need to Understand
+## 7. What I still need to understand
 
 - Inf-sup condition properly
 - Monolithic approach vs. splitting
