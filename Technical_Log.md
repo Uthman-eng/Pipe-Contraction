@@ -8,7 +8,7 @@ Solving incompressible Navier-Stokes through an expansion pipe from $d_1 = 7.2\,
 
 **1. Navier-Stokes (Momentum Equation):**
 
-$$\rho\left(\frac{\partial u}{\partial t} + u \cdot \nabla u\right) = \nabla \cdot \sigma(u,\, p) + f \tag{1}$$
+$$\rho\left(\frac{\partial u}{\partial t} + u \cdot \nabla u\right) = \nabla \cdot \sigma(u,\, p) + f$$
 
 where $u$ = velocity, $p$ = pressure, $f$ = force per unit volume.
 
@@ -26,7 +26,7 @@ $$\frac{\partial p}{\partial t} + \nabla \cdot (ρu) = 0  $$
 
 Since $ρ$ is kept constant the terms vanishes and becomes:
 
-$$\nabla \cdot u = 0\tag2$$
+$$\nabla \cdot u = 0$$
 
 
 
@@ -42,7 +42,7 @@ $$\langle v,\, w \rangle := \int_\Omega v \cdot w\ \mathrm{d}x,
 
 Integrating the stress divergence term by parts gives the boundary term:
 
-$$\langle -\nabla \cdot \sigma,\, v \rangle = \langle \sigma,\, \varepsilon(v) \rangle - \langle T,\, v \rangle_{\partial\Omega} \tag3$$
+$$\langle -\nabla \cdot \sigma,\, v \rangle = \langle \sigma,\, \varepsilon(v) \rangle - \langle T,\, v \rangle_{\partial\Omega}$$
 
 The boundary term $\langle T,\, v \rangle_{\partial\Omega}$ vanishes at inlet and walls; at the outlet it gives the do-nothing (natural outflow) condition.
 
@@ -54,15 +54,15 @@ Monolithic is expensive and instead splitting methods are used instead, reducing
 
 **Step 1 — Tentative velocity** (weak momentum, stress term integrated by parts):
 
-$$\langle -\nabla \cdot \sigma,\, v \rangle = \langle \sigma,\, \varepsilon(v) \rangle - \langle T,\, v \rangle_{\partial\Omega} \tag3$$
+$$\langle -\nabla \cdot \sigma,\, v \rangle = \langle \sigma,\, \varepsilon(v) \rangle - \langle T,\, v \rangle_{\partial\Omega}$$
 
 **Step 2 — Pressure correction** (Poisson equation):
 
-$$-\frac{\rho\,\nabla \cdot u^*}{\Delta t} + \nabla^2 p^{n+1} - \nabla^2 p^{n} = 0\tag4$$
+$$-\frac{\rho\,\nabla \cdot u^*}{\Delta t} + \nabla^2 p^{n+1} - \nabla^2 p^{n} = 0$$
 
 **Step 3 — Velocity correction**:
 
-$$\rho\,\langle u^{n+1} - u^*,\, v \rangle = -\Delta t\,\langle \nabla(p^{n+1} - p^{n}),\, v \rangle \tag5$$
+$$\rho\,\langle u^{n+1} - u^*,\, v \rangle = -\Delta t\,\langle \nabla(p^{n+1} - p^{n}),\, v \rangle$$
 
 **Crank-Nicolson time discretisation / Adams-Bashforth Approximation**
 
