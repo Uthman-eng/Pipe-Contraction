@@ -4,3 +4,5 @@ ipykernel==7.1.0
 trame==3.11.0
 trame-vtk==2.11.5
 tqdm==4.67.2
+pyvistaqt
+streamlit

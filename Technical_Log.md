@@ -2,9 +2,8 @@
 
 ## 1. Problem 
 
-Solving incompressible Navier-Stokes through an expansion pipe from $d_1 = 7.2\,\text{mm}$ to $d_2 = 17.2\,\text{mm}$. Goal: back-calculate the loss coefficient $K$ and compare to experiment data.
-
----
+Solving incompressible Navier-Stokes through an expansion pipe from $d_1 = 7.2\,\text{mm}$ to $d_2 = 17.2\,\text{mm}$. <br>
+<b>Goal</b>: back-calculate the loss coefficient $K$ and compare to experiment data.
 
 ## 2. Governing Equations
 
@@ -28,8 +27,6 @@ Since $\rho$ is kept constant the term vanishes and becomes:
 
 $$\nabla \cdot u = 0$$
 
----
-
 ## 3. Weak Formulation
 
 Inner product notation over the domain $\Omega$ and its boundary $\partial\Omega$ are defined as:
@@ -41,8 +38,6 @@ Integrating the stress divergence term by parts gives the boundary term:
 $$\langle -\nabla \cdot \sigma,\, v \rangle = \langle \sigma,\, \varepsilon(v) \rangle - \langle T,\, v \rangle_{\partial\Omega}$$
 
 The boundary term $\langle T,\, v \rangle_{\partial\Omega}$ vanishes at inlet and walls; at the outlet it gives the do-nothing (natural outflow) condition.
-
----
 
 ## 4. IPCS Scheme
 
@@ -70,8 +65,6 @@ Crank-Nicolson on the viscous term, Adams-Bashforth extrapolation on the nonline
 
 Zero idea about Taylor-Hood elements right now, reading through this.
 
----
-
 ## 5. Implementation
 
 Defined the mesh (2D) in Gmsh [4] following through examples and tagged wall, inlet, outlet physical groups. Kept everything else the same and followed on exactly from FEniCSx tutorials [1, 2].
@@ -96,22 +89,19 @@ $$Re = \frac{\rho\,\bar{U}\,d_1}{\mu}$$
 
 Physical parameters set to water, Reynolds number kept low to prevent turbulence. I haven't done this yet but I need to, maybe add onto Streamlit, or at the very least make a dashboard that shows me max $u$ and average inlet $\bar{U}$, etc. My experiment data uses average $u$, so I can then modify my $U_{\max}$ to get the average $u$ matching that of the experiment, and then the back-calculation will be easier. At minimum the dashboard should give me average velocity at inlet and outlet, and the Reynolds number.
 
----
 
-## 6. Results
+## 6. Draft
 
-Quick PyVista output of what I have currently produced.
+Quick PyVista output of what I have currently have done, it is a draft.
 
-![Fluid through pipe](assets/pipe_flow.png)
+![Fluid through pipe](assets/flow.png)
 
----
 
 ## 7. Validation
 
 Experimental data for a 7.7 mm to 17.2 mm sudden expansion was collected but Reynolds numbers are too high for a laminar simulation to be comparable. Instead, arbitrary laminar flow rates (Re < 2000) will be used as inputs, and the loss coefficient $K$ back-calculated from the simulated pressure drop. This will then be compared against the analytical Borda-Carnot value for a sudden expansion.
 
 
----
 
 ## 8. What I still need to understand
 
@@ -121,7 +111,6 @@ Experimental data for a 7.7 mm to 17.2 mm sudden expansion was collected but Rey
 
 Still need to read up on inf-sup conditions and play around with methods, and take time to understand.
 
----
 
 ## 9. References
 
