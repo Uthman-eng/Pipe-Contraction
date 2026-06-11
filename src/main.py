@@ -49,46 +49,27 @@ from ufl import (
     rhs,
 )
 
-gmsh.initialize()
-gmsh.model.add('2d_Pipe_Contraction')
+from src.mesh import create_mesh
+
+
+
 
 d1 = (7.2 / 1000)
 d2 = (17.2 / 1000)
 pipe_length = (100 / 1000)
 spacing = (1 / 1000)
 
-# inlet points 7.2mm 
-yinlet_bot = -(d1 / 2)
-# outlet points 17.2mm
-youtlet_bot = -(d2 / 2)
+mesh, facet_tags, cell_tags, _ = create_mesh(
+        d1=d1,
+        d2=d2, 
+        pipe_length=pipe_length, 
+        spacing=spacing)
 
-# using rectangles and constructing joint shape 
-inlet_rectangle = gmsh.model.occ.addRectangle(0, yinlet_bot , 0, (pipe_length / 2), d1)
-outlet_rectangle = gmsh.model.occ.addRectangle((pipe_length / 2), youtlet_bot, 0, (pipe_length / 2), d2)
-gmsh.model.occ.fragment([(2, inlet_rectangle)], [(2, outlet_rectangle)])
-gmsh.model.occ.synchronize()
-
-gmsh.model.mesh.setSize(gmsh.model.getEntities(dim=0), spacing)
-
-gmsh.model.addPhysicalGroup(1, [4], tag=1)                  # inlet (x=0)
-gmsh.model.addPhysicalGroup(1, [6], tag=2)                  # outlet (x=100)
-gmsh.model.addPhysicalGroup(1, [1, 3, 5, 7, 8, 9], tag=3)   # walls
-gmsh.model.addPhysicalGroup(2, [1, 2], tag=10)              # full domain
-
-gmsh.model.mesh.generate(2)
-
-gmsh.model.mesh.generate(2)
-
-mesh_data = gmshio.model_to_mesh(gmsh.model, MPI.COMM_WORLD, rank=0, gdim=2)
-mesh = mesh_data.mesh
-cell_tags = mesh_data.cell_tags
-facet_tags = mesh_data.facet_tags
-
-mesh_data = gmshio.model_to_mesh(gmsh.model, MPI.COMM_WORLD, 0, gdim=2)
-mesh = mesh_data.mesh
-assert mesh_data.facet_tags is not None
-ft = mesh_data.facet_tags
-ft.name = "Facet markers"
+def inlet_velocity(d1):
+    yinlet_bot = -(d1 / 2)
+    values = np.zeros((2, x.shape[1]))
+    values[0] = (4 * U_max * (x[1] - yinlet_bot) * ((yinlet_bot + d1) - x[1])) / d1**2
+    return values
 
 t = 0.0
 T = 60*5 # Final time
@@ -113,10 +94,6 @@ Q = functionspace(mesh, s_cg2)
 fdim = mesh.topology.dim - 1
 
 
-def inlet_velocity(x):
-    values = np.zeros((2, x.shape[1]))
-    values[0] = (4 * U_max * (x[1] - yinlet_bot) * ((yinlet_bot + d1) - x[1])) / d1**2
-    return values
 
 # walls
 u_zero = np.zeros(mesh.geometry.dim, dtype=PETSc.ScalarType)
@@ -125,7 +102,7 @@ bcu_walls = dirichletbc(
 
 # inlet
 u_inlet = Function(V)
-u_inlet.interpolate(inlet_velocity)
+u_inlet.interpolate(inlet_velocity(d1=d1))
 bcu_inlet = dirichletbc(
     u_inlet, locate_dofs_topological(V, fdim, facet_tags.find(1)))
 
@@ -287,3 +264,4 @@ plotter.add_mesh(glyphs, scalars="GlyphScale", cmap="viridis")
 plotter.view_xy()
 plotter.screenshot("output/flow.png")
 plotter.close()
+
