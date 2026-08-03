@@ -72,12 +72,12 @@ def setting_functionspace(mesh):
     V : dolfinx.fem.FunctionSpace
         Vector P2 space for velocity.
     Q : dolfinx.fem.FunctionSpace
-        Scalar P2 space for pressure.
+        Scalar P1 space for pressure.
     fdim : int
         Facet dimension (mesh.topology.dim - 1), for use in locate_dofs_topological.
     """
     v_cg2 = element("Lagrange", mesh.basix_cell(), 2, shape=(mesh.geometry.dim,))
-    s_cg1 = element("Lagrange", mesh.basix_cell(), 2)
+    s_cg1 = element("Lagrange", mesh.basix_cell(), 1)
     V = functionspace(mesh, v_cg2)
     Q = functionspace(mesh, s_cg1)
 
@@ -283,7 +283,8 @@ def plotting_figure(mesh, u_n, V, v_avg, Re):
 
     function_grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
     function_grid["u"] = values
-    glyphs = function_grid.glyph(orient="u", factor=0.001)
+    # tolerance thins out glyphs so individual arrows stay legible on the refined mesh
+    glyphs = function_grid.glyph(orient="u", factor=0.02, tolerance=0.015)
 
     tdim = mesh.topology.dim
     mesh.topology.create_connectivity(tdim, tdim)
@@ -293,23 +294,21 @@ def plotting_figure(mesh, u_n, V, v_avg, Re):
     plotter = pyvista.Plotter(off_screen=True)
     plotter.add_text(f"Fluid flow through a Pipe\n\nInlet Average velocity: {v_avg:.4f} (m/s) | Re: {Re:.4f}",
                     position="upper_edge", font_size=12)
-    plotter.add_mesh(grid, style="wireframe", color="k", line_width=0.5)
+    plotter.add_mesh(grid, style="wireframe", color="lightgray", line_width=0.4, opacity=0.6)
     plotter.add_mesh(glyphs, scalars="GlyphScale", cmap="viridis")
     plotter.view_xy()
-    plotter.screenshot("output/time_dependant_solver.png")
+    plotter.enable_anti_aliasing("ssaa")
+    plotter.screenshot("output/time_dependent_solver.png", scale=2)
     plotter.close()
 
 def main():
     params = Parameters()
     d1 = params.d1
-    d2 = params.d2
-    pipe_length = params.pipe_length
-    spacing = params.pipe_length
     T = params.T
     dt = params.dt
 
     v_avg = params.v_avg
-    U_max = 3 / (2 * v_avg)
+    U_max = 1.5 * v_avg  # parabolic profile: v_avg = (2/3) * U_max
 
     mesh, facet_tags, cell_tags = create_mesh(params)
 
@@ -321,8 +320,6 @@ def main():
     V, Q, fdim = setting_functionspace(mesh)
     bcu, bcp = set_dirichletbc(mesh, V, Q, fdim, facet_tags, d1, U_max)
     u_n, p_ = ipcs_solver(V,Q, mesh, rho, k, mu, T, dt, bcu, bcp)
-
-    Re = (rho.value * v_avg * d1) / mu.value  
 
     plotting_figure(mesh, u_n, V, v_avg, Re)
 
